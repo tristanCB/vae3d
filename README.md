@@ -2,7 +2,6 @@
 Visualizing MNIST in Keras Tutorial taken from Chollet (2020) but in 3 latent dimensions.
 
 # Example
-> ![example](./exampleImages/example.png)
 
 > ![example](./exampleImages/example.gif)
 
