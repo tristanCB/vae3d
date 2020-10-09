@@ -161,4 +161,48 @@ for i in range(bins):
     plt.savefig(f'./TMP/{str(i).zfill(4)}.png')
     ax1.clear()
 
+# %%
+import imageio
+import PIL
+from PIL import Image
 
+def generateGIF(inputPATH, outputNAME):
+    """
+    Example use: generateGIF("./TMP_GIF/","output")
+    """
+    # with imageio.get_writer(f'{inputPATH}{outputNAME}.gif', mode='I') as writer:
+    #     for filename in [i for i in (os.listdir(inputPATH)) if "png" in i.split(".")[-1]]:
+    #         pathToim = os.path.join(inputPATH,filename)
+
+    #         baseheight = 480
+    #         img = Image.open(pathToim)
+    #         hpercent = (baseheight / float(img.size[1]))
+    #         wsize = int((float(img.size[0]) * float(hpercent)))
+    #         img = img.resize((wsize, baseheight), PIL.Image.ANTIALIAS)
+
+    #         print(pathToim)
+    #         image = imageio.imread(img)
+
+    #         writer.append_data(image)
+
+    images = []
+    for n in [i for i in (os.listdir(inputPATH)) if "png" in i.split(".")[-1]]:
+        frame = Image.open(os.path.join(inputPATH,n))
+
+        baseheight = 480
+        hpercent = (baseheight / float(frame.size[1]))
+        wsize = int((float(frame.size[0]) * float(hpercent)))
+        frame = frame.resize((wsize, baseheight), PIL.Image.ANTIALIAS)
+
+        images.append(frame)
+
+    images_reserved = images[1:]
+    images_reserved.reverse()
+    # Save the frames as an animated GIF
+    images[0].save(f'{inputPATH}{outputNAME}.gif',
+                save_all=True,
+                append_images=images[1:],
+                duration=120,
+                loop=0)
+
+generateGIF("./TMP/","example")
