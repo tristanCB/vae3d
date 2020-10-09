@@ -19,7 +19,7 @@ import matplotlib as mpl
 
 ## User defined vars ##
 # How many images to generate
-bins = 120
+bins = 20
 # For the 3D scatter to rotate we set an angle grater than 1
 change_in_angle = 2.5
 n = 15          # The amount of subdivision used to plot the decoded space
@@ -40,6 +40,10 @@ decoder = tf.keras.models.load_model("DECODER")
 # Load the toy dataset
 (x_train, y_train), _ = tf.keras.datasets.mnist.load_data()
 x_train = np.expand_dims(x_train, -1).astype("float32") / 255
+
+# # Sub sample dataset
+# x_train = x_train[:10000]
+# y_train = y_train[:10000]
 
 # Get latent dims of x_train
 z_mean, _, z = encoder.predict(x_train)
@@ -128,10 +132,16 @@ def generate_frame(i):
     # Rotate one frame CCW
     ax2.view_init(30, i*change_in_angle)
 
-    # The dimensions for the first and second latent dimensions for the bin we are plotting
-    dim0 = data_bins[i][:,0]
-    dim1 = data_bins[i][:,1]
+    # Shuffle and subsample bin (we want to see images in the decoded space)
+    np.random.shuffle(data_bins[i])
+    # sub_sample = data_bins[i][:int(data_bins[i].shape[0]/4)]
+    sub_sample = data_bins[i]
 
+    # The dimensions for the first and second latent dimensions for the bin we are plotting
+    dim0 = sub_sample[:,0]
+    dim1 = sub_sample[:,1]
+    labels = sub_sample[:,3]
+    
     # Linearly transales the dim0 and 1 from the range [-scale, scale] to [pixel_range[0], pixel_range[-1]]
     # This ensures the images corespond more of less to the decoded digit show in this axis.
     # new_value = (old_value - old_bottom) / (old_top - old_bottom) * (new_top - new_bottom) + new_bottom
@@ -148,21 +158,21 @@ def generate_frame(i):
     tys = pixel_range[0] + (-dim1  + scale)/(scale*2)*(pixel_range[-1]-pixel_range[0]) 
 
     # Plot 2D scatter on decoder
-    scattergram = ax1.scatter(txs, tys, alpha=0.25, c=data_bins[i][:,3], vmin=0, vmax=10, facecolors='none')
-    
-
+    # import matplotlib.tri as tri
+    scattergram = ax1.scatter(txs, tys, alpha=0.1, c=labels, vmin=0, vmax=10, facecolors='none')
+    # scattergram = ax1.tricontour(txs, tys, labels,10, alpha=0.5)
 
     # Reformat axis so the labels do not change...
     formatAx1()
 
 # Generates a frame in the animation
-for i in range(bins):
+for i in range(0, bins+1):
     generate_frame(i)
     plt.savefig(f'./TMP/{str(i).zfill(4)}.png')
     ax1.clear()
 
 # %%
-import imageio
+# import imageio
 import PIL
 from PIL import Image
 
@@ -198,11 +208,14 @@ def generateGIF(inputPATH, outputNAME):
 
     images_reserved = images[1:]
     images_reserved.reverse()
+
+    pausedFor = 5
+    pausedFrames = [images[-1] for i in range(pausedFor)]
     # Save the frames as an animated GIF
     images[0].save(f'{inputPATH}{outputNAME}.gif',
                 save_all=True,
-                append_images=images[1:],
-                duration=120,
+                append_images=images[1:]+pausedFrames+images_reserved,
+                duration=60,
                 loop=0)
 
 generateGIF("./TMP/","example")
